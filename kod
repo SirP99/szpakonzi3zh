@@ -1,0 +1,200 @@
+// #define _CRT_SECURE_NO_WARNINGS 
+#include <stdio.h>
+#include <conio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+
+#define MAX_SOR 30 
+#define MAX_SORMERET 100 
+#define MAX_CELLAMERET 20 
+
+
+typedef struct {
+	char* datum;
+	int homerseklet;
+	int para;
+	char* homersekletiras;
+	char* parairas;
+	char* mondat;
+} adatstruktura;
+
+
+
+void sor_feldolgoz(char* sor, int sorszam, adatstruktura* adattomb);
+
+
+void adatstruktura_feltolt(adatstruktura* adatelem, char* adat, int hanyadik_adat);
+
+int main(void)
+{
+	
+	FILE* adatfajl;
+	int adatfajl_hiba;
+	adatfajl_hiba = fopen_s(&adatfajl, "be.csv", "r");
+
+	if (adatfajl_hiba == 0) { 
+		printf("Feldolgozas indul... \n");
+
+		adatstruktura* adattomb = (adatstruktura*)malloc(MAX_SOR * sizeof(adatstruktura));
+
+		char* sor = (char*)malloc(MAX_SORMERET * sizeof(char));
+
+		fgets(sor, MAX_SORMERET, adatfajl);
+
+		int i = 0; 
+		while (1) {
+
+		
+			memset(sor, 0, MAX_SORMERET);
+
+			
+		
+			if (fgets(sor, MAX_SORMERET, adatfajl) != NULL) {
+				sor_feldolgoz(sor, i, adattomb); 
+				i++;
+			}
+			else {
+				break;
+			}
+		}
+
+		fclose(adatfajl); 
+
+
+
+		FILE* kimenet_fajl;
+		int kimenet_fajl_hiba;
+
+		kimenet_fajl_hiba = fopen_s(&kimenet_fajl, "idojaraselorejelzes.csv", "w");
+
+		if (kimenet_fajl_hiba == 0) {
+
+			fprintf_s(kimenet_fajl, "nap;elorejelzes\n");
+
+			for (int l = 0; l < MAX_SOR;l++) {
+				fprintf_s(kimenet_fajl, "%s;Ma %s es %s idojaras varhato.\n", adattomb[l].datum, adattomb[l].homersekletiras, adattomb[l].parairas);
+			}
+
+			fclose(kimenet_fajl);
+			printf("Feldolgozas kesz.");
+
+		}
+		else {
+			printf("Az eredmenyek fajlba irasa meghiusult.");
+		}
+
+
+		free(sor);
+		free(adattomb);
+
+	}
+	else {
+		printf("A fajl nem talalhato!");
+	}
+
+	_getch();
+	return 0;
+}
+
+void sor_feldolgoz(char* sor, int sorszam, adatstruktura* adattomb) {
+	char* sor_reszlet = sor;
+	char* meddig;
+	char* cella;
+	int meret;
+	int j = 0;
+
+	while (1) {
+		meddig = strchr(sor_reszlet, ';');
+
+		if (meddig == NULL) {
+			meret = sor + MAX_SORMERET - sor_reszlet;
+			cella = (char*)malloc(meret * sizeof(char));
+			strcpy_s(cella, meret * sizeof(char), sor_reszlet);
+			adatstruktura_feltolt(&adattomb[sorszam], cella, j);
+			break; 
+		}
+
+		meret = meddig - sor_reszlet + 1;
+		cella = (char*)malloc(meret * sizeof(char));
+
+		
+		strncpy_s(cella, meret * sizeof(char), sor_reszlet, meret - 1);
+		cella[meret - 1] = '\0';
+		adatstruktura_feltolt(&adattomb[sorszam], cella, j);
+
+		
+		sor_reszlet = meddig + 1;
+
+		j++;
+		
+		free(cella);
+	}
+}
+
+void adatstruktura_feltolt(adatstruktura* adatelem, char* nyers_adat, int hanyadik_adat) {
+	switch (hanyadik_adat) {
+	case 0:
+		(*adatelem).datum = (char*)malloc(MAX_CELLAMERET * sizeof(char));
+		strcpy_s((*adatelem).datum, MAX_CELLAMERET * sizeof(char), nyers_adat);
+		break;
+	case 1:
+		(*adatelem).homerseklet = atoi(nyers_adat);
+		if ((*adatelem).homerseklet < -6)
+		{
+			(*adatelem).homersekletiras = "fagyos";
+		}
+		else
+		{
+			if (((*adatelem).homerseklet >= -6) && (*adatelem).homerseklet < 0)
+			{
+				(*adatelem).homersekletiras = "hideg";
+			}
+			else
+			{
+				if (((*adatelem).homerseklet >= 0) && ((*adatelem).homerseklet) < 5)
+				{
+					(*adatelem).homersekletiras = "huvos";
+				}
+				else
+				{
+					if ((*adatelem).homerseklet >= 5)
+					{
+						(*adatelem).homersekletiras = "enyhe";
+					}
+				}
+			}
+		}
+		break;
+	case 2:
+		(*adatelem).para = atoi(nyers_adat);
+		if ((*adatelem).para < 40)
+		{
+			(*adatelem).parairas = "szaraz";
+		}
+		else
+		{
+			if (((*adatelem).para >= 40) && (*adatelem).para < 55)
+			{
+				(*adatelem).parairas = "harmatos";
+			}
+			else
+			{
+				if (((*adatelem).para >= 55) && ((*adatelem).para) < 70)
+				{
+					(*adatelem).parairas = "nedves";
+				}
+				else
+				{
+					if ((*adatelem).para >= 70)
+					{
+						(*adatelem).parairas = "kodos";
+					}
+				}
+			}
+			break;
+	default:
+		break;
+		}
+	}
+}
